@@ -109,22 +109,78 @@ function DigitGame({ len, settings, onRestart, onChangeLen }) {
   const { maxGuesses } = settings
   const [generating, setGenerating] = useState(true)
   const [secret]  = useState(() => randDigitNumber(len))
-  const [input,   setInput]   = useState('')
+  
+  // Track inputs as an array of characters, padded with empty strings
+  const [inputDigits, setInputDigits] = useState(Array(len).fill(''))
+  
   const [guesses, setGuesses] = useState([])
   const [status,  setStatus]  = useState('playing')
   const [error,   setError]   = useState('')
   const [showConfetti, setShowConfetti] = useState(false)
-  const inputRef = useRef(null)
+  
+  // Refs for each input to manage focus
+  const inputRefs = useRef(Array(len).fill(null))
 
   useEffect(() => {
-    if (!generating) inputRef.current?.focus()
-  }, [generating])
+    if (!generating && status === 'playing') {
+      inputRefs.current[0]?.focus()
+    }
+  }, [generating, status])
+
+  function handleInputChange(index, e) {
+    const value = e.target.value
+    // Allow only numeric digits, take the last typed char if multiple
+    const digit = value.replace(/\D/g, '').slice(-1)
+    
+    if (digit) {
+      const newDigits = [...inputDigits]
+      newDigits[index] = digit
+      setInputDigits(newDigits)
+      
+      // Auto-advance focus
+      if (index < len - 1) {
+        inputRefs.current[index + 1]?.focus()
+      }
+    } else {
+      // If cleared, just clear this box
+      const newDigits = [...inputDigits]
+      newDigits[index] = ''
+      setInputDigits(newDigits)
+    }
+  }
+
+  function handleKeyDown(index, e) {
+    if (e.key === 'Backspace') {
+      if (!inputDigits[index] && index > 0) {
+        // If empty, delete previous and move focus back
+        const newDigits = [...inputDigits]
+        newDigits[index - 1] = ''
+        setInputDigits(newDigits)
+        inputRefs.current[index - 1]?.focus()
+      } else {
+        // If has value, just clear it
+        const newDigits = [...inputDigits]
+        newDigits[index] = ''
+        setInputDigits(newDigits)
+      }
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      inputRefs.current[index - 1]?.focus()
+    } else if (e.key === 'ArrowRight' && index < len - 1) {
+      inputRefs.current[index + 1]?.focus()
+    } else if (e.key === 'Enter') {
+      handleSubmit(e)
+    }
+  }
+
+  function handleFocus(e) {
+    // Select contents on focus for easy overwriting
+    e.target.select()
+  }
 
   function handleSubmit(e) {
     e.preventDefault()
-    const val = input.trim()
+    const val = inputDigits.join('')
 
-    if (!/^\d+$/.test(val)) { setError('Digits only.'); return }
     if (val.length !== len)  { setError(`Enter exactly ${len} digits.`); return }
     if (guesses.some(g => g.digits.join('') === val)) { setError('Already guessed that.'); return }
 
@@ -132,7 +188,10 @@ function DigitGame({ len, settings, onRestart, onChangeLen }) {
     const feedback = getFeedback(secret, val)
     const next = [...guesses, { digits: val.split(''), feedback }]
     setGuesses(next)
-    setInput('')
+    
+    // Clear inputs and refocus first box
+    setInputDigits(Array(len).fill(''))
+    inputRefs.current[0]?.focus()
 
     if (val === secret) {
       setStatus('won')
@@ -197,19 +256,27 @@ function DigitGame({ len, settings, onRestart, onChangeLen }) {
           </div>
 
           {playing && (
-            <form className="input-row" onSubmit={handleSubmit}>
-              <input
-                id="digit-guess-input"
-                ref={inputRef}
-                type="text"
-                inputMode="numeric"
-                maxLength={len}
-                value={input}
-                onChange={e => setInput(e.target.value.replace(/\D/g, '').slice(0, len))}
-                placeholder={'_'.repeat(len)}
-                autoComplete="off"
-              />
-              <button id="digit-guess-btn" type="submit" className="btn">Guess</button>
+            <form onSubmit={handleSubmit}>
+              <div className="digit-input-row" aria-label="Enter guess digits">
+                {Array.from({ length: len }).map((_, i) => (
+                  <input
+                    key={i}
+                    ref={el => inputRefs.current[i] = el}
+                    type="text"
+                    inputMode="numeric"
+                    className="digit-input-cell"
+                    value={inputDigits[i]}
+                    onChange={(e) => handleInputChange(i, e)}
+                    onKeyDown={(e) => handleKeyDown(i, e)}
+                    onFocus={handleFocus}
+                    maxLength={2}
+                    aria-label={`Digit ${i + 1}`}
+                  />
+                ))}
+              </div>
+              <div className="digit-guess-submit">
+                <button id="digit-guess-btn" type="submit" className="btn">Guess</button>
+              </div>
             </form>
           )}
 

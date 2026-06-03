@@ -262,19 +262,21 @@ input[type="number"] { -moz-appearance: textfield; }
 .guess-hint { color: var(--c-muted); font-size: 0.85rem; font-family: var(--font); }
 .guess-hint.correct { color: var(--c-fg); font-weight: 700; }
 
-/* ── Digit grid ──────────────────────────────────────────────── */
+/* ── Digit grid ──────────────────────────────────────────── */
 .digit-grid {
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
   margin-bottom: var(--space-lg);
+  max-width: 420px;
 }
 
-.digit-row { display: flex; gap: var(--space-xs); }
+.digit-row { display: flex; gap: var(--space-sm); }
 
 .digit-cell {
-  width: 52px;
-  height: 52px;
+  flex: 1;
+  aspect-ratio: 1;
+  min-width: 0;
   border: 1px solid var(--c-border);
   border-radius: var(--radius);
   display: flex;
@@ -282,7 +284,7 @@ input[type="number"] { -moz-appearance: textfield; }
   align-items: center;
   justify-content: center;
   font-family: var(--font-mono);
-  font-size: 1.1rem;
+  font-size: clamp(1rem, 5vw, 1.5rem);
   font-weight: 700;
   position: relative;
   transition: background 0.15s, border-color 0.15s;
@@ -300,7 +302,7 @@ input[type="number"] { -moz-appearance: textfield; }
 }
 
 .digit-cell .cell-mark {
-  font-size: 0.6rem;
+  font-size: 0.55rem;
   font-weight: 400;
   position: absolute;
   bottom: 2px;
@@ -310,6 +312,47 @@ input[type="number"] { -moz-appearance: textfield; }
 
 /* Digit row animation */
 .digit-row.revealed { animation: slide-in-left 0.2s ease; }
+
+/* Individual digit input boxes */
+.digit-input-row {
+  display: flex;
+  gap: var(--space-sm);
+  max-width: 420px;
+  margin-bottom: var(--space-md);
+}
+
+.digit-input-cell {
+  flex: 1;
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 0;
+  border: 2px solid var(--c-border);
+  border-radius: var(--radius);
+  background: var(--c-bg);
+  color: var(--c-fg);
+  font-family: var(--font-mono);
+  font-size: clamp(1rem, 5vw, 1.5rem);
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+  caret-color: transparent;
+  transition: border-color 0.15s, background 0.15s;
+  -webkit-appearance: none;
+}
+
+.digit-input-cell:focus {
+  border-color: var(--c-fg);
+  background: var(--c-surface);
+}
+
+.digit-guess-submit {
+  max-width: 420px;
+  margin-bottom: var(--space-lg);
+}
+
+.digit-guess-submit .btn {
+  width: 100%;
+}
 
 /* Digit length selector */
 .len-select {
@@ -771,7 +814,6 @@ input[type="number"] { -moz-appearance: textfield; }
 /* ── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 480px) {
   .app-wrapper { padding: var(--space-md) var(--space-sm); }
-  .digit-cell { width: 44px; height: 44px; font-size: 1rem; }
   .sneaky-meta { flex-wrap: wrap; gap: var(--space-md); }
   /* Tabs: always readable, don't shrink labels */
   .mode-tab {
@@ -789,5 +831,4 @@ input[type="number"] { -moz-appearance: textfield; }
 
 @media (max-width: 360px) {
   .mode-tab { padding: var(--space-sm) 8px; font-size: 0.78rem; }
-  .digit-cell { width: 40px; height: 40px; font-size: 0.95rem; }
 }
