@@ -236,24 +236,27 @@ function SneakyGame({ settings, onRestart }) {
       )}
 
       {history.length > 0 && (
-        <table className="history-table" aria-label="Guess history">
-          <thead>
-            <tr>
-              <th>#</th><th>Guess</th><th>Answer</th><th>Left</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[...history].reverse().map((h, i) => (
-              <tr key={i}>
-                <td>{history.length - i}</td>
-                <td>{h.guess}</td>
-                <td className={`hint-${h.answer}`}>{answerLabel[h.answer]}</td>
-                <td>{h.answer === 'correct' ? '0' : h.remaining}</td>
+        <div className="table-scroll">
+          <table className="history-table" aria-label="Guess history">
+            <thead>
+              <tr>
+                <th>#</th><th>Guess</th><th>Answer</th><th>Left</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {[...history].reverse().map((h, i) => (
+                <tr key={i}>
+                  <td>{history.length - i}</td>
+                  <td>{h.guess}</td>
+                  <td className={`hint-${h.answer}`}>{answerLabel[h.answer]}</td>
+                  <td>{h.answer === 'correct' ? '0' : h.remaining}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
+
 
       {!playing && (
         <div className="restart-row">

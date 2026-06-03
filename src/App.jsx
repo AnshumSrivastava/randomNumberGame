@@ -31,30 +31,37 @@ export default function App() {
   }, [darkMode])
 
   return (
-    <div className="app-wrapper">
-      <Header darkMode={darkMode} onToggleDark={() => setDark(d => !d)} />
+    <>
+      <div className="app-wrapper">
+        <Header darkMode={darkMode} onToggleDark={() => setDark(d => !d)} />
 
-      <nav className="mode-tabs" role="tablist">
-        {MODES.map(m => (
-          <button
-            key={m.id}
-            id={`tab-${m.id}`}
-            role="tab"
-            aria-selected={mode === m.id}
-            className={`mode-tab${mode === m.id ? ' active' : ''}`}
-            onClick={() => setMode(m.id)}
-          >
-            {m.label}
-          </button>
-        ))}
-      </nav>
+        <nav className="mode-tabs" role="tablist">
+          {MODES.map(m => (
+            <button
+              key={m.id}
+              id={`tab-${m.id}`}
+              role="tab"
+              aria-selected={mode === m.id}
+              className={`mode-tab${mode === m.id ? ' active' : ''}`}
+              onClick={() => setMode(m.id)}
+            >
+              {m.label}
+            </button>
+          ))}
+        </nav>
 
-      <main>
-        {mode === 'normal' && <NormalMode />}
-        {mode === 'digit'  && <DigitMode  />}
-        {mode === 'sneaky' && <SneakyMode />}
-        {mode === 'snipe'  && <SnipeMode  />}
-      </main>
-    </div>
+        <main>
+          {mode === 'normal' && <NormalMode />}
+          {mode === 'digit'  && <DigitMode  />}
+          {mode === 'sneaky' && <SneakyMode />}
+          {mode === 'snipe'  && <SnipeMode  />}
+        </main>
+      </div>
+
+      <footer className="site-footer-bottom">
+        <span>Made by</span>
+        <strong>Anshum Srivastava</strong>
+      </footer>
+    </>
   )
 }

@@ -107,13 +107,17 @@ html, body {
   border-color: var(--c-fg);
 }
 
-/* ── Mode Tabs ───────────────────────────────────────────────── */
+/* ── Mode Tabs ──────────────────────────────────────────────── */
 .mode-tabs {
   display: flex;
   gap: 0;
   border-bottom: 1px solid var(--c-border);
   margin-bottom: var(--space-xl);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+.mode-tabs::-webkit-scrollbar { display: none; }
 
 .mode-tab {
   background: none;
@@ -128,6 +132,7 @@ html, body {
   cursor: pointer;
   transition: color 0.1s, border-color 0.1s;
   letter-spacing: 0.01em;
+  white-space: nowrap;
 }
 
 .mode-tab:hover { color: var(--c-fg); }
@@ -173,7 +178,7 @@ html, body {
 }
 
 .input-row input:focus { border-color: var(--c-fg); }
-.input-row input::placeholder { color: #aaa; }
+.input-row input::placeholder { color: var(--c-border); }
 
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
@@ -362,7 +367,7 @@ input[type="number"] { -moz-appearance: textfield; }
 
 .snipe-range { font-size: 0.82rem !important; font-weight: 500 !important; }
 
-/* ── History table ───────────────────────────────────────────── */
+/* ── History table ──────────────────────────────────────────── */
 .history-table {
   width: 100%;
   border-collapse: collapse;
@@ -396,8 +401,8 @@ input[type="number"] { -moz-appearance: textfield; }
 .hint-lower  { color: var(--c-fg); font-weight: 600; }
 .hint-correct { font-weight: 700; }
 
-/* ── Misc ────────────────────────────────────────────────────── */
-.restart-row { display: flex; gap: var(--space-sm); margin-top: var(--space-md); }
+/* ── Misc ──────────────────────────────────────────────── */
+.restart-row { display: flex; gap: var(--space-sm); margin-top: var(--space-lg); }
 
 .range-info {
   font-size: 0.82rem;
@@ -734,14 +739,55 @@ input[type="number"] { -moz-appearance: textfield; }
   border-color: var(--c-fg);
 }
 
+/* ── Table scroll wrapper on narrow screens ─────────────────── */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: var(--space-lg);
+}
+.table-scroll .history-table { margin-bottom: 0; }
+
+/* ── Site footer ────────────────────────────────────────────── */
+.site-footer-bottom {
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--space-md) var(--space-md) var(--space-xl);
+  border-top: 1px solid var(--c-border-light);
+  font-size: 0.75rem;
+  color: var(--c-muted);
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.site-footer-bottom strong {
+  font-weight: 600;
+  color: var(--c-fg);
+}
+
 /* ── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 480px) {
   .app-wrapper { padding: var(--space-md) var(--space-sm); }
   .digit-cell { width: 44px; height: 44px; font-size: 1rem; }
   .sneaky-meta { flex-wrap: wrap; gap: var(--space-md); }
-  .mode-tab { padding: var(--space-sm) 10px; font-size: 0.82rem; }
-  .generating-number { font-size: 2.8rem; }
+  /* Tabs: always readable, don't shrink labels */
+  .mode-tab {
+    padding: var(--space-sm) 12px;
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+  .generating-number { font-size: 2.6rem; }
   .snipe-level-header { flex-direction: column; align-items: flex-start; gap: 4px; }
-  .feedback-btn { min-width: 70px; padding: var(--space-sm) var(--space-sm); }
+  .feedback-btn { min-width: 70px; padding: var(--space-sm) 10px; }
   .settings-input { width: 62px; }
+  .comp-prompt-number { font-size: 2rem; }
+  .site-footer-bottom { padding: var(--space-md) var(--space-sm) var(--space-lg); }
+}
+
+@media (max-width: 360px) {
+  .mode-tab { padding: var(--space-sm) 8px; font-size: 0.78rem; }
+  .digit-cell { width: 40px; height: 40px; font-size: 0.95rem; }
 }

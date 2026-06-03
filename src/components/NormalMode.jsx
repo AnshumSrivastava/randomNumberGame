@@ -238,6 +238,7 @@ function NormalGame({ settings, onRestart }) {
             </ul>
           )}
 
+
           {!playing && (
             <div className="restart-row">
               <button id="normal-restart-btn" className="btn" onClick={onRestart}>

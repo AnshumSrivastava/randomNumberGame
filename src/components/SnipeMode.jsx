@@ -512,24 +512,27 @@ function SnipeGame({ settings, onRestart }) {
 
       {/* History feed */}
       {history.length > 0 && (
-        <table className="history-table" aria-label="Game history">
-          <thead>
-            <tr>
-              <th>#</th><th>Who</th><th>Guess</th><th>Answer</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[...history].reverse().map((h, i) => (
-              <tr key={history.length - i} className={h.who === 'computer' ? 'cpu-row' : ''}>
-                <td>{history.length - i}</td>
-                <td>{h.who === 'player' ? 'You' : 'CPU'}</td>
-                <td>{h.guess}</td>
-                <td className={`hint-${h.feedback}`}>{HINT[h.feedback]}</td>
+        <div className="table-scroll">
+          <table className="history-table" aria-label="Game history">
+            <thead>
+              <tr>
+                <th>#</th><th>Who</th><th>Guess</th><th>Answer</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {[...history].reverse().map((h, i) => (
+                <tr key={history.length - i} className={h.who === 'computer' ? 'cpu-row' : ''}>
+                  <td>{history.length - i}</td>
+                  <td>{h.who === 'player' ? 'You' : 'CPU'}</td>
+                  <td>{h.guess}</td>
+                  <td className={`hint-${h.feedback}`}>{HINT[h.feedback]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
+
 
       {phase === 'result' && (
         <div className="restart-row">
