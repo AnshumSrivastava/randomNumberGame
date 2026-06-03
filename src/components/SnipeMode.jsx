@@ -2,19 +2,12 @@ import { useState, useRef, useEffect } from 'react'
 import NumberRoll from './NumberRoll'
 import Confetti from './Confetti'
 
-const MIN = 1
-const MAX = 100
+const DEFAULTS = { min: 1, max: 100, revealNumber: true }
 
 function randInt(a, b) {
   return Math.floor(Math.random() * (b - a + 1)) + a
 }
 
-/**
- * Computer guessing strategy.
- * expertPct = 0  → pure random in [low, high]
- * expertPct = 100 → pure binary search (midpoint)
- * Between: probabilistic mix of both.
- */
 function getCompGuess(low, high, expertPct) {
   if (low >= high) return low
   const mid = Math.floor((low + high) / 2)
@@ -23,51 +16,173 @@ function getCompGuess(low, high, expertPct) {
 }
 
 function levelName(v) {
-  if (v <=  10) return 'Noob'
-  if (v <=  30) return 'Easy'
-  if (v <=  70) return 'Balanced'
-  if (v <=  90) return 'Advanced'
+  if (v <= 10) return 'Noob'
+  if (v <= 30) return 'Easy'
+  if (v <= 70) return 'Balanced'
+  if (v <= 90) return 'Advanced'
   return 'Expert'
 }
 
-const HINT = {
-  higher:  '↑ Higher',
-  lower:   '↓ Lower',
-  correct: '= Correct',
-}
+const HINT = { higher: '↑ Higher', lower: '↓ Lower', correct: '= Correct' }
 
-// ─── outer wrapper — key trick for clean restart ───────────────────────────
+// ── Outer wrapper ──────────────────────────────────────────────
 export default function SnipeMode() {
-  const [key, setKey] = useState(0)
-  return <SnipeGame key={key} onRestart={() => setKey(k => k + 1)} />
+  const [key,          setKey]          = useState(0)
+  const [settings,     setSettings]     = useState(DEFAULTS)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [pending,      setPending]      = useState(DEFAULTS)
+  const [settingsErr,  setSettingsErr]  = useState([])
+
+  function openSettings() {
+    setPending({ ...settings })
+    setSettingsErr([])
+    setSettingsOpen(true)
+  }
+
+  function applySettings() {
+    let min = parseInt(pending.min, 10)
+    let max = parseInt(pending.max, 10)
+    const errors = []
+
+    if (isNaN(min) || min < 0)    { min = 0;        errors.push('Min set to 0.') }
+    if (isNaN(max) || max <= min) { max = min + 10;  errors.push(`Max set to ${min + 10}.`) }
+
+    const valid = { min, max, revealNumber: pending.revealNumber }
+    setSettings(valid)
+    setPending(valid)
+    setKey(k => k + 1)
+    setSettingsOpen(false)
+    if (errors.length) setSettingsErr(errors)
+  }
+
+  return (
+    <>
+      <div className="game-header-row">
+        <h2 className="game-title">Snipe Mode</h2>
+        <button
+          id="snipe-settings-btn"
+          className={`gear-btn${settingsOpen ? ' active' : ''}`}
+          onClick={settingsOpen ? () => setSettingsOpen(false) : openSettings}
+          aria-label="Game settings"
+          title="Settings"
+        >
+          ⚙
+        </button>
+      </div>
+
+      {settingsOpen && (
+        <div className="settings-panel" role="region" aria-label="Snipe mode settings">
+          <p className="settings-panel-title">Settings — Snipe Mode</p>
+
+          <div className="settings-row">
+            <label className="settings-label">Minimum number</label>
+            <div className="settings-control">
+              <input
+                id="snipe-min"
+                className="settings-input"
+                type="number"
+                min={0}
+                value={pending.min}
+                onChange={e => setPending(p => ({ ...p, min: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div className="settings-row">
+            <label className="settings-label">Maximum number</label>
+            <div className="settings-control">
+              <input
+                id="snipe-max"
+                className="settings-input"
+                type="number"
+                min={1}
+                value={pending.max}
+                onChange={e => setPending(p => ({ ...p, max: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div className="settings-row">
+            <label className="settings-label">
+              Your secret number
+              <span className="settings-sublabel">
+                Reveal: you enter it upfront, computer auto-checks.
+                Hidden: you keep it in your head, you judge each computer guess manually.
+              </span>
+            </label>
+            <div className="settings-control">
+              <div className="toggle-switch">
+                <button
+                  id="snipe-reveal-btn"
+                  className={`toggle-btn${pending.revealNumber ? ' active' : ''}`}
+                  onClick={() => setPending(p => ({ ...p, revealNumber: true }))}
+                >
+                  Reveal
+                </button>
+                <button
+                  id="snipe-hidden-btn"
+                  className={`toggle-btn${!pending.revealNumber ? ' active' : ''}`}
+                  onClick={() => setPending(p => ({ ...p, revealNumber: false }))}
+                >
+                  Hidden
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {settingsErr.length > 0 && (
+            <p className="settings-error">{settingsErr.join(' ')}</p>
+          )}
+
+          <div className="settings-actions">
+            <button id="snipe-apply-settings" className="btn" onClick={applySettings}>
+              Apply &amp; Restart
+            </button>
+            <button className="btn btn-ghost" onClick={() => setSettingsOpen(false)}>
+              Cancel
+            </button>
+          </div>
+          <p className="settings-note">Takes effect on restart.</p>
+        </div>
+      )}
+
+      <SnipeGame key={key} settings={settings} onRestart={() => setKey(k => k + 1)} />
+    </>
+  )
 }
 
-// ─── main game component ────────────────────────────────────────────────────
-function SnipeGame({ onRestart }) {
+// ── Inner game ─────────────────────────────────────────────────
+function SnipeGame({ settings, onRestart }) {
+  const { min, max, revealNumber } = settings
+
   /* phases: setup → generating → game → result */
   const [phase, setPhase] = useState('setup')
 
   /* setup */
-  const [secretInput, setSecretInput] = useState('')
-  const [secretError, setSecretError] = useState('')
-  const [level, setLevel]             = useState(50)
+  const [secretInput,  setSecretInput]  = useState('')
+  const [secretError,  setSecretError]  = useState('')
+  const [level,        setLevel]        = useState(50)
 
-  /* stable refs for async callbacks */
+  /* stable refs — safe to read inside setTimeout callbacks */
   const playerSecretRef = useRef(null)
   const compSecretRef   = useRef(null)
-  const compRangeRef    = useRef({ low: MIN, high: MAX })
+  const compRangeRef    = useRef({ low: min, high: max })
 
-  /* game display state */
-  const [playerRange,     setPlayerRange]     = useState({ low: MIN, high: MAX })
-  const [compRangeDisplay, setCompRangeDisplay] = useState({ low: MIN, high: MAX })
-  const [history,  setHistory]    = useState([])  // {who, guess, feedback}
-  const [turn,     setTurn]       = useState('player')
-  const [compThinking, setCompThinking] = useState(false)
-  const [guessInput,   setGuessInput]   = useState('')
-  const [guessError,   setGuessError]   = useState('')
+  /* game display */
+  const [playerRange,      setPlayerRange]      = useState({ low: min, high: max })
+  const [compRangeDisplay, setCompRangeDisplay] = useState({ low: min, high: max })
+  const [history,          setHistory]          = useState([])
+  const [turn,             setTurn]             = useState('player')
+  const [compThinking,     setCompThinking]     = useState(false)
+  const [guessInput,       setGuessInput]       = useState('')
+  const [guessError,       setGuessError]       = useState('')
+
+  /* hidden-mode: waiting for player to judge the computer's guess */
+  const [awaitingFeedback,  setAwaitingFeedback]  = useState(false)
+  const [pendingCompGuess,  setPendingCompGuess]   = useState(null)
 
   /* result */
-  const [winner,      setWinner]      = useState(null)
+  const [winner,       setWinner]       = useState(null)
   const [showConfetti, setShowConfetti] = useState(false)
 
   const guessInputRef = useRef(null)
@@ -76,32 +191,38 @@ function SnipeGame({ onRestart }) {
   useEffect(() => { levelRef.current = level }, [level])
 
   useEffect(() => {
-    if (phase === 'game' && turn === 'player' && !compThinking) {
+    if (phase === 'game' && turn === 'player' && !compThinking && !awaitingFeedback) {
       guessInputRef.current?.focus()
     }
-  }, [phase, turn, compThinking])
+  }, [phase, turn, compThinking, awaitingFeedback])
 
   /* ── Setup ── */
   function handleSetup(e) {
     e.preventDefault()
-    const val = parseInt(secretInput, 10)
-    if (isNaN(val) || val < MIN || val > MAX) {
-      setSecretError(`Enter a whole number between ${MIN} and ${MAX}.`)
-      return
+
+    if (revealNumber) {
+      const val = parseInt(secretInput, 10)
+      if (isNaN(val) || val < min || val > max) {
+        setSecretError(`Enter a whole number between ${min} and ${max}.`)
+        return
+      }
+      playerSecretRef.current = val
+    } else {
+      playerSecretRef.current = null  // kept in player's head
     }
+
     setSecretError('')
-    playerSecretRef.current = val
-    compSecretRef.current   = randInt(MIN, MAX)
-    compRangeRef.current    = { low: MIN, high: MAX }
+    compSecretRef.current = randInt(min, max)
+    compRangeRef.current  = { low: min, high: max }
     setPhase('generating')
   }
 
-  /* ── Player guess ── */
+  /* ── Player guesses computer's number ── */
   function handlePlayerGuess(e) {
     e.preventDefault()
     const val = parseInt(guessInput, 10)
-    if (isNaN(val) || val < MIN || val > MAX) {
-      setGuessError(`Enter a number between ${MIN} and ${MAX}.`)
+    if (isNaN(val) || val < min || val > max) {
+      setGuessError(`Enter a number between ${min} and ${max}.`)
       return
     }
 
@@ -111,7 +232,7 @@ function SnipeGame({ onRestart }) {
     else if (val < cs) feedback = 'higher'
     else               feedback = 'lower'
 
-    // Update player's knowledge of comp's number
+    // Narrow player's knowledge of computer's number
     setPlayerRange(prev => {
       const next = { ...prev }
       if (feedback === 'higher') next.low  = Math.max(next.low,  val + 1)
@@ -130,77 +251,99 @@ function SnipeGame({ onRestart }) {
       return
     }
 
-    // Hand off to computer
+    // Computer's turn
     setTurn('computer')
     setCompThinking(true)
-
-    // Capture level now (stable for the callback)
-    const lvl = levelRef.current
+    const lvl   = levelRef.current
     const delay = 900 + Math.random() * 800
 
     setTimeout(() => {
       const range = compRangeRef.current
       const guess = getCompGuess(range.low, range.high, lvl)
-      const ps    = playerSecretRef.current
-
-      let fb
-      if (guess === ps)    fb = 'correct'
-      else if (guess < ps) fb = 'higher'
-      else                 fb = 'lower'
-
-      // Narrow comp's range
-      const newRange = { ...range }
-      if (fb === 'higher') newRange.low  = guess + 1
-      if (fb === 'lower')  newRange.high = guess - 1
-      compRangeRef.current = newRange
-      setCompRangeDisplay({ ...newRange })
-
-      setHistory(prev => [...prev, { who: 'computer', guess, feedback: fb }])
       setCompThinking(false)
 
-      if (fb === 'correct') {
-        setWinner('computer')
-        setPhase('result')
-        return
+      if (revealNumber) {
+        // Auto-compute feedback
+        const ps = playerSecretRef.current
+        let fb
+        if (guess === ps)    fb = 'correct'
+        else if (guess < ps) fb = 'higher'
+        else                 fb = 'lower'
+        processCompFeedback(guess, fb)
+      } else {
+        // Ask the player to judge
+        setPendingCompGuess(guess)
+        setAwaitingFeedback(true)
       }
-
-      setTurn('player')
     }, delay)
+  }
+
+  /* ── Player judges computer's guess (hidden mode) ── */
+  function handleHiddenFeedback(feedback) {
+    const guess = pendingCompGuess
+    setAwaitingFeedback(false)
+    setPendingCompGuess(null)
+    processCompFeedback(guess, feedback)
+  }
+
+  /* ── Shared: process computer's guess result ── */
+  function processCompFeedback(guess, feedback) {
+    const newRange = { ...compRangeRef.current }
+    if (feedback === 'higher') newRange.low  = guess + 1
+    if (feedback === 'lower')  newRange.high = guess - 1
+    compRangeRef.current = newRange
+    setCompRangeDisplay({ ...newRange })
+
+    setHistory(prev => [...prev, { who: 'computer', guess, feedback }])
+
+    if (feedback === 'correct') {
+      setWinner('computer')
+      setPhase('result')
+      return
+    }
+
+    setTurn('player')
   }
 
   /* ── Render: Setup ── */
   if (phase === 'setup') {
     return (
       <>
-        <h2 className="game-title">Snipe Mode</h2>
         <p className="game-desc">
-          Pick your secret number. The computer picks one too.
-          You take turns guessing each other — first to guess correctly wins.
-          Set how smart the computer plays with the difficulty slider.
+          {revealNumber
+            ? 'Enter your secret number, then take turns guessing each other\'s. First to guess correctly wins.'
+            : 'Think of a secret number. The computer will try to guess it — you judge each guess. You also try to guess the computer\'s number. First to be correct wins.'
+          }
         </p>
 
         <form onSubmit={handleSetup}>
-          <label htmlFor="snipe-secret-input" className="field-label">
-            Your secret number ({MIN}–{MAX})
-          </label>
-          <div className="input-row">
-            <input
-              id="snipe-secret-input"
-              type="number"
-              min={MIN}
-              max={MAX}
-              value={secretInput}
-              onChange={e => setSecretInput(e.target.value)}
-              placeholder={`${MIN} – ${MAX}`}
-              autoComplete="off"
-              autoFocus
-            />
-          </div>
-
-          {secretError && (
-            <p className="status-msg info" style={{ marginBottom: '12px' }}>
-              {secretError}
-            </p>
+          {revealNumber ? (
+            <>
+              <label htmlFor="snipe-secret-input" className="field-label">
+                Your secret number ({min}–{max})
+              </label>
+              <div className="input-row">
+                <input
+                  id="snipe-secret-input"
+                  type="number"
+                  min={min}
+                  max={max}
+                  value={secretInput}
+                  onChange={e => setSecretInput(e.target.value)}
+                  placeholder={`${min} – ${max}`}
+                  autoComplete="off"
+                  autoFocus
+                />
+              </div>
+              {secretError && (
+                <p className="status-msg info" style={{ marginBottom: '12px' }}>{secretError}</p>
+              )}
+            </>
+          ) : (
+            <div className="status-msg info" style={{ marginBottom: '16px' }}>
+              Think of a number between {min} and {max} and keep it in your head.
+              When the computer guesses, you will judge each guess.
+            </div>
           )}
 
           <div className="snipe-level-block">
@@ -246,15 +389,12 @@ function SnipeGame({ onRestart }) {
   /* ── Render: Generating ── */
   if (phase === 'generating') {
     return (
-      <>
-        <h2 className="game-title">Snipe Mode</h2>
-        <NumberRoll
-          onDone={() => setPhase('game')}
-          min={MIN}
-          max={MAX}
-          label="Computer choosing its number..."
-        />
-      </>
+      <NumberRoll
+        onDone={() => setPhase('game')}
+        min={min}
+        max={max}
+        label="Computer choosing its number..."
+      />
     )
   }
 
@@ -262,11 +402,12 @@ function SnipeGame({ onRestart }) {
   const playerGuesses = history.filter(h => h.who === 'player').length
   const compGuesses   = history.filter(h => h.who === 'computer').length
 
+  // For result: figure out what number the computer found (last correct comp guess)
+  const compFoundEntry = history.find(h => h.who === 'computer' && h.feedback === 'correct')
+
   return (
     <>
       {showConfetti && <Confetti active />}
-
-      <h2 className="game-title">Snipe Mode</h2>
 
       {/* Stats bar */}
       <div className="sneaky-meta">
@@ -297,32 +438,68 @@ function SnipeGame({ onRestart }) {
         <div className={`status-msg${winner === 'player' ? ' win' : ''}`}>
           {winner === 'player'
             ? `You win! Found the computer's number (${compSecretRef.current}) in ${playerGuesses} guess${playerGuesses !== 1 ? 'es' : ''}.`
-            : `Computer wins — it found your number (${playerSecretRef.current}) in ${compGuesses} guess${compGuesses !== 1 ? 'es' : ''}. Its number was ${compSecretRef.current}.`
+            : revealNumber
+              ? `Computer wins — it found your number (${playerSecretRef.current}) in ${compGuesses} guess${compGuesses !== 1 ? 'es' : ''}. Its number was ${compSecretRef.current}.`
+              : `Computer wins — it guessed your number (${compFoundEntry?.guess ?? '?'}) in ${compGuesses} guess${compGuesses !== 1 ? 'es' : ''}. Its number was ${compSecretRef.current}.`
           }
         </div>
       )}
 
-      {/* Turn indicator */}
-      {phase === 'game' && (
+      {/* Computer thinking */}
+      {phase === 'game' && compThinking && (
         <div className="turn-indicator">
-          {compThinking
-            ? <span>Computer is thinking<span className="thinking-dots">...</span></span>
-            : <span>Your turn — guess the computer&apos;s number ({playerRange.low}–{playerRange.high})</span>
-          }
+          Computer is thinking<span className="thinking-dots">...</span>
+        </div>
+      )}
+
+      {/* Hidden-mode: waiting for player to judge computer's guess */}
+      {phase === 'game' && awaitingFeedback && pendingCompGuess !== null && (
+        <div className="comp-prompt">
+          <p className="comp-prompt-label">Computer guesses</p>
+          <p className="comp-prompt-number">{pendingCompGuess}</p>
+          <p className="comp-prompt-question">
+            Is your number higher, lower, or is this correct?
+          </p>
+          <div className="feedback-btns">
+            <button
+              id="feedback-higher"
+              className="feedback-btn"
+              onClick={() => handleHiddenFeedback('higher')}
+            >
+              ↑ Higher
+            </button>
+            <button
+              id="feedback-lower"
+              className="feedback-btn"
+              onClick={() => handleHiddenFeedback('lower')}
+            >
+              ↓ Lower
+            </button>
+            <button
+              id="feedback-correct"
+              className="feedback-btn"
+              onClick={() => handleHiddenFeedback('correct')}
+            >
+              = Correct
+            </button>
+          </div>
         </div>
       )}
 
       {/* Player input */}
-      {phase === 'game' && turn === 'player' && !compThinking && (
+      {phase === 'game' && turn === 'player' && !compThinking && !awaitingFeedback && (
         <>
+          <div className="turn-indicator">
+            Your turn — guess the computer&apos;s number ({playerRange.low}–{playerRange.high})
+          </div>
           {guessError && <p className="status-msg info">{guessError}</p>}
           <form className="input-row" onSubmit={handlePlayerGuess}>
             <input
               id="snipe-guess-input"
               ref={guessInputRef}
               type="number"
-              min={MIN}
-              max={MAX}
+              min={min}
+              max={max}
               value={guessInput}
               onChange={e => setGuessInput(e.target.value)}
               placeholder={`${playerRange.low} – ${playerRange.high}`}
@@ -338,10 +515,7 @@ function SnipeGame({ onRestart }) {
         <table className="history-table" aria-label="Game history">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Who</th>
-              <th>Guess</th>
-              <th>Answer</th>
+              <th>#</th><th>Who</th><th>Guess</th><th>Answer</th>
             </tr>
           </thead>
           <tbody>
@@ -359,9 +533,7 @@ function SnipeGame({ onRestart }) {
 
       {phase === 'result' && (
         <div className="restart-row">
-          <button id="snipe-restart-btn" className="btn" onClick={onRestart}>
-            Play Again
-          </button>
+          <button id="snipe-restart-btn" className="btn" onClick={onRestart}>Play Again</button>
         </div>
       )}
     </>
