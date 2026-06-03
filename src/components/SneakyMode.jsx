@@ -1,27 +1,21 @@
 import { useState, useRef, useEffect } from 'react'
+import Confetti from './Confetti'
 
 const RANGE_MIN = 1
 const RANGE_MAX = 1000
 
-// Build the initial set of all valid numbers
 function buildFullSet() {
   const s = new Set()
   for (let i = RANGE_MIN; i <= RANGE_MAX; i++) s.add(i)
   return s
 }
 
-// Adversarial answer: pick whichever response ('higher' | 'lower') leaves
-// the most valid numbers remaining, consistent with the guess.
-// - 'higher' means the answer > guess  → keep numbers > guess
-// - 'lower'  means the answer < guess  → keep numbers < guess
-// If the guess is literally the only number left, we must say 'correct'.
 function adversarialAnswer(validSet, guess) {
   if (validSet.size === 1 && validSet.has(guess)) return 'correct'
 
   const higherSet = new Set([...validSet].filter(n => n > guess))
   const lowerSet  = new Set([...validSet].filter(n => n < guess))
 
-  // Prefer the larger remaining set (keep game alive longest)
   if (higherSet.size >= lowerSet.size) {
     return higherSet.size > 0 ? 'higher' : 'correct'
   } else {
@@ -37,11 +31,11 @@ function applyAnswer(validSet, guess, answer) {
 
 function SneakyGame({ onRestart }) {
   const [validSet, setValidSet] = useState(() => buildFullSet())
-  // history: [{guess, answer, remaining}]  — remaining = valid set size AFTER this guess
   const [history,  setHistory]  = useState([])
   const [status,   setStatus]   = useState('playing')
   const [input,    setInput]    = useState('')
   const [error,    setError]    = useState('')
+  const [showConfetti, setShowConfetti] = useState(false)
   const inputRef = useRef(null)
 
   useEffect(() => { inputRef.current?.focus() }, [])
@@ -60,7 +54,7 @@ function SneakyGame({ onRestart }) {
     }
 
     setError('')
-    const answer = adversarialAnswer(validSet, val)
+    const answer  = adversarialAnswer(validSet, val)
     const nextSet = applyAnswer(validSet, val, answer)
     const nextHistory = [...history, { guess: val, answer, remaining: nextSet.size }]
 
@@ -70,10 +64,11 @@ function SneakyGame({ onRestart }) {
 
     if (answer === 'correct') {
       setStatus('won')
+      setShowConfetti(true)
     }
   }
 
-  const playing = status === 'playing'
+  const playing  = status === 'playing'
   const cornered = validSet.size === 1
 
   const validArr = [...validSet].sort((a, b) => a - b)
@@ -89,11 +84,13 @@ function SneakyGame({ onRestart }) {
 
   return (
     <>
+      {showConfetti && <Confetti active />}
+
       <h2 className="game-title">Sneaky Mode</h2>
       <p className="game-desc">
-        The hidden number shifts after every guess — but it must stay consistent with
-        every previous answer. Your goal: use logic to corner the game until only one
-        valid number remains, then guess it.
+        The hidden number shifts after every guess — but must stay consistent with
+        every previous answer. Force the game into a corner until only one valid
+        number remains, then guess it.
       </p>
 
       <div className="sneaky-meta">
@@ -130,9 +127,7 @@ function SneakyGame({ onRestart }) {
 
       {playing && (
         <>
-          <p className="range-info">
-            Still valid: {displayRange}
-          </p>
+          <p className="range-info">Still valid: {displayRange}</p>
           <form className="input-row" onSubmit={handleSubmit}>
             <input
               id="sneaky-guess-input"
@@ -157,13 +152,13 @@ function SneakyGame({ onRestart }) {
               <th>#</th>
               <th>Guess</th>
               <th>Answer</th>
-              <th>Left after</th>
+              <th>Left</th>
             </tr>
           </thead>
           <tbody>
-            {history.map((h, i) => (
+            {[...history].reverse().map((h, i) => (
               <tr key={i}>
-                <td>{i + 1}</td>
+                <td>{history.length - i}</td>
                 <td>{h.guess}</td>
                 <td className={`hint-${h.answer}`}>{answerLabel[h.answer]}</td>
                 <td>{h.answer === 'correct' ? '0' : h.remaining}</td>
@@ -185,6 +180,6 @@ function SneakyGame({ onRestart }) {
 }
 
 export default function SneakyMode() {
-  const [gameKey, setGameKey] = useState(0)
-  return <SneakyGame key={gameKey} onRestart={() => setGameKey(k => k + 1)} />
+  const [key, setKey] = useState(0)
+  return <SneakyGame key={key} onRestart={() => setKey(k => k + 1)} />
 }
