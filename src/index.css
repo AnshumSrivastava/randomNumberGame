@@ -1,0 +1,431 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --c-bg: #ffffff;
+  --c-fg: #111111;
+  --c-muted: #555555;
+  --c-border: #cccccc;
+  --c-border-light: #e8e8e8;
+  --c-surface: #f5f5f5;
+  --c-surface-hover: #eeeeee;
+  --c-success: #111111;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "SF Mono", "Fira Code", Consolas, "Courier New", monospace;
+  --radius: 3px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 40px;
+}
+
+html, body {
+  height: 100%;
+  background: var(--c-bg);
+  color: var(--c-fg);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Layout --- */
+.app-wrapper {
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-md);
+  flex: 1;
+}
+
+/* --- Header --- */
+.site-header {
+  margin-bottom: var(--space-xl);
+  border-bottom: 2px solid var(--c-fg);
+  padding-bottom: var(--space-md);
+}
+
+.site-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 2px;
+}
+
+.site-subtitle {
+  font-size: 0.82rem;
+  color: var(--c-muted);
+  letter-spacing: 0.01em;
+}
+
+/* --- Mode Tabs --- */
+.mode-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--c-border);
+  margin-bottom: var(--space-xl);
+}
+
+.mode-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: var(--space-sm) var(--space-md);
+  font-family: var(--font);
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--c-muted);
+  cursor: pointer;
+  transition: color 0.1s, border-color 0.1s;
+  letter-spacing: 0.01em;
+}
+
+.mode-tab:hover {
+  color: var(--c-fg);
+}
+
+.mode-tab.active {
+  color: var(--c-fg);
+  border-bottom-color: var(--c-fg);
+}
+
+/* --- Game section headings --- */
+.game-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: var(--space-xs);
+}
+
+.game-desc {
+  font-size: 0.82rem;
+  color: var(--c-muted);
+  margin-bottom: var(--space-lg);
+  line-height: 1.6;
+}
+
+/* --- Forms & Inputs --- */
+.input-row {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.input-row input[type="number"],
+.input-row input[type="text"] {
+  flex: 1;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--c-fg);
+  background: var(--c-bg);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.input-row input:focus {
+  border-color: var(--c-fg);
+}
+
+.input-row input::placeholder {
+  color: #aaa;
+}
+
+/* Remove number input arrows */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+}
+input[type="number"] { -moz-appearance: textfield; }
+
+/* --- Buttons --- */
+.btn {
+  padding: var(--space-sm) var(--space-md);
+  background: var(--c-fg);
+  color: var(--c-bg);
+  border: 1px solid var(--c-fg);
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.1s, color 0.1s;
+  letter-spacing: 0.02em;
+}
+
+.btn:hover {
+  background: #333;
+}
+
+.btn:disabled {
+  background: #bbb;
+  border-color: #bbb;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  background: none;
+  color: var(--c-fg);
+  border: 1px solid var(--c-border);
+}
+
+.btn-ghost:hover {
+  background: var(--c-surface-hover);
+}
+
+/* --- Feedback / Status messages --- */
+.status-msg {
+  font-size: 0.88rem;
+  margin-bottom: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  background: var(--c-surface);
+}
+
+.status-msg.win {
+  border-color: var(--c-fg);
+  background: var(--c-fg);
+  color: var(--c-bg);
+  font-weight: 600;
+}
+
+.status-msg.info {
+  color: var(--c-muted);
+}
+
+/* --- Guess history (Normal mode) --- */
+.guess-list {
+  list-style: none;
+  border: 1px solid var(--c-border-light);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: var(--space-lg);
+}
+
+.guess-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--c-border-light);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+}
+
+.guess-list li:last-child {
+  border-bottom: none;
+}
+
+.guess-list li:nth-child(even) {
+  background: var(--c-surface);
+}
+
+.guess-number {
+  font-weight: 600;
+  min-width: 60px;
+}
+
+.guess-hint {
+  color: var(--c-muted);
+  font-size: 0.85rem;
+  font-family: var(--font);
+}
+
+.guess-hint.correct {
+  color: var(--c-fg);
+  font-weight: 700;
+}
+
+/* --- Digit mode grid --- */
+.digit-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.digit-row {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.digit-cell {
+  width: 52px;
+  height: 52px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+  position: relative;
+}
+
+.digit-cell.correct {
+  background: var(--c-fg);
+  color: var(--c-bg);
+  border-color: var(--c-fg);
+}
+
+.digit-cell.empty {
+  background: var(--c-surface);
+  color: var(--c-muted);
+}
+
+.digit-cell .cell-mark {
+  font-size: 0.6rem;
+  font-weight: 400;
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  font-family: var(--font);
+}
+
+/* Length selector */
+.len-select {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+  align-items: center;
+}
+
+.len-select label {
+  font-size: 0.85rem;
+  color: var(--c-muted);
+  margin-right: var(--space-xs);
+}
+
+.len-btn {
+  padding: 4px 14px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: var(--c-muted);
+  transition: all 0.1s;
+}
+
+.len-btn.active {
+  background: var(--c-fg);
+  color: var(--c-bg);
+  border-color: var(--c-fg);
+}
+
+/* --- Sneaky mode --- */
+.sneaky-meta {
+  display: flex;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  padding: var(--space-md);
+  border: 1px solid var(--c-border-light);
+  border-radius: var(--radius);
+  background: var(--c-surface);
+}
+
+.sneaky-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sneaky-stat-label {
+  font-size: 0.72rem;
+  color: var(--c-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.sneaky-stat-value {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+/* History table */
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  margin-bottom: var(--space-lg);
+}
+
+.history-table th {
+  text-align: left;
+  padding: var(--space-xs) var(--space-sm);
+  border-bottom: 2px solid var(--c-fg);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--c-muted);
+}
+
+.history-table td {
+  padding: var(--space-xs) var(--space-sm);
+  border-bottom: 1px solid var(--c-border-light);
+  font-family: var(--font-mono);
+}
+
+.history-table tr:last-child td {
+  border-bottom: none;
+}
+
+.hint-higher { color: var(--c-fg); font-weight: 600; }
+.hint-lower  { color: var(--c-fg); font-weight: 600; }
+.hint-correct { font-weight: 700; }
+
+/* --- Restart row --- */
+.restart-row {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+/* --- Range info --- */
+.range-info {
+  font-size: 0.82rem;
+  color: var(--c-muted);
+  margin-bottom: var(--space-md);
+  font-family: var(--font-mono);
+}
+
+/* --- Responsive --- */
+@media (max-width: 480px) {
+  .app-wrapper {
+    padding: var(--space-md) var(--space-sm);
+  }
+
+  .digit-cell {
+    width: 44px;
+    height: 44px;
+    font-size: 1rem;
+  }
+
+  .sneaky-meta {
+    flex-wrap: wrap;
+    gap: var(--space-md);
+  }
+
+  .mode-tab {
+    padding: var(--space-sm) 10px;
+    font-size: 0.82rem;
+  }
+}
